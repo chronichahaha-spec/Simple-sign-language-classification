@@ -2,5 +2,5 @@ streamlit
 opencv-python-headless
 torch
 numpy
-mediapipe==0.10.13
+mediapipe==0.9.1
 pillow
