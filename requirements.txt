@@ -3,4 +3,4 @@ opencv-python-headless
 torch
 numpy
 pillow
-mediapipe @ https://files.pythonhosted.org/packages/ee/f3/eb52d0f6ada3327e2d02fdbe57ecea5f919adf9836e483e3623f741fdf90/mediapipe-0.10.13-cp312-cp312-win_amd64.whl
+mediapipe @ https://files.pythonhosted.org/packages/e4/81/6c10d108f9556bfe391a95633aa4e5363d2e61968ff6924eb9d0d7d11924/mediapipe-0.10.13-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
