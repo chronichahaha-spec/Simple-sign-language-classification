@@ -2,5 +2,5 @@ streamlit
 opencv-python-headless
 torch
 numpy
-mediapipe==0.10.7
 pillow
+mediapipe @ https://files.pythonhosted.org/packages/ee/f3/eb52d0f6ada3327e2d02fdbe57ecea5f919adf9836e483e3623f741fdf90/mediapipe-0.10.13-cp312-cp312-win_amd64.whl
