@@ -1,0 +1,6 @@
+streamlit
+opencv-python
+torch
+numpy
+mediapipe==0.10.13
+pillow
