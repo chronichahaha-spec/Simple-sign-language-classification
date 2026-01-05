@@ -8,19 +8,18 @@ from torch import nn
 import mediapipe as mp
 from PIL import Image
 
-# 设置页面配置
+# page setting
 st.set_page_config(
-    page_title="手势识别应用",
+    page_title="Sign Language Video Classfication",
     page_icon="👋",
     layout="wide"
 )
 
-# 初始化MediaPipe
-mp_holistic = mp.solutions.holistic
-mp_drawing = mp.solutions.drawing_utils
+mp_holistic = mp.solutions.holistic  # Holistic model
+mp_drawing = mp.solutions.drawing_utils  # Drawing utilities
 
 def mediapipe_detection(image, model):
-    """处理图像并检测关键点"""
+    # process image and detect key gesture points
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     image.flags.writeable = False
     results = model.process(image)
@@ -29,7 +28,6 @@ def mediapipe_detection(image, model):
     return image, results
 
 def extract_keypoints(results):
-    """提取关键点数据"""
     pose = np.array([[res.x, res.y, res.z, res.visibility] 
                      for res in results.pose_landmarks.landmark]).flatten() if results.pose_landmarks else np.zeros(33*4)
     lh = np.array([[res.x, res.y, res.z] 
@@ -39,7 +37,7 @@ def extract_keypoints(results):
     
     return np.concatenate([pose, lh, rh])
 
-# 定义LSTM模型类
+# LSTM model framework
 class CustomLSTM(nn.Module):
     def __init__(self, input_size, hidden_size, num_classes):
         super(CustomLSTM, self).__init__()
@@ -65,10 +63,10 @@ class CustomLSTM(nn.Module):
         x = self.output_layer(x)
         return x
 
-# 手势类别列表
+# gestures prediction classes
 gestures = np.array(['polis','nasi','abang','apa','hari','ribut','pukul','beli','emak','perlahan'])
 
-# 加载模型
+# Load the trained model
 model_path = "model.pth"
 input_size = 258
 hidden_size = 64
@@ -78,48 +76,47 @@ num_classes = len(gestures)
 model = torch.load(model_path,weights_only=False, map_location=torch.device('cpu'))
 model.eval()
 
-# 主界面
-st.title("👋 手势识别应用")
+# main title
+st.title("👋 Sign Language Video Classification")
 
-# 第一个文本框：上传提示
-st.markdown("### 请上传手语视频来获取预测")
+# first message: reminder to upload videos
+st.markdown("### Please upload your sign language to get AI model predictiom")
 
-# 上传视频
-uploaded_file = st.file_uploader("选择视频文件", type=['mp4', 'avi', 'mov'])
+# button to upload videos
+uploaded_file = st.file_uploader("Select the video file", type=['mp4', 'avi', 'mov'])
 
 if uploaded_file is not None:
-    # 保存临时文件
+    # save as temporary file to pass into LSTM model
     with tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') as tmp_file:
         tmp_file.write(uploaded_file.getvalue())
         video_path = tmp_file.name
     
-    # 读取视频基本信息
+    # read video information
     cap = cv2.VideoCapture(video_path)
     fps = int(cap.get(cv2.CAP_PROP_FPS))
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     duration = total_frames / fps if fps > 0 else 0
     
-    # 第二个文本框：显示视频信息
-    st.markdown("### 视频信息")
+    # second message: show video information
+    st.markdown("### Video Information")
     col1, col2 = st.columns(2)
     with col1:
-        st.info(f"**文件名:** {uploaded_file.name}")
+        st.info(f"**File Name:** {uploaded_file.name}")
     with col2:
-        st.info(f"**时长:** {duration:.2f}秒")
+        st.info(f"**Duration:** {duration:.2f}秒")
     
-    # 开始处理按钮
-    if st.button("开始预测", type="primary"):
-        with st.spinner("正在处理视频..."):
-            # 初始化变量
+    # Button to start model prediction
+    if st.button("Start Prediction", type="primary"):
+        with st.spinner("Processing the Video..."):
             cap = cv2.VideoCapture(video_path)
             sequence = []
             predictions_history = []
             frame_count = 0
             
-            # 进度条
+            # progress bar
             progress_bar = st.progress(0)
             
-            # 创建MediaPipe模型
+            # media pipe model
             with mp_holistic.Holistic(
                 min_detection_confidence=0.5,
                 min_tracking_confidence=0.5
@@ -130,40 +127,37 @@ if uploaded_file is not None:
                     if not ret:
                         break
                     
-                    # 更新进度
+                    # update progess bar
                     frame_count += 1
                     progress = frame_count / total_frames
                     progress_bar.progress(min(progress, 1.0))
                     
-                    # 检测关键点
+                    # key point detection
                     _, results = mediapipe_detection(frame, holistic)
                     
-                    # 提取关键点并添加到序列
+                    # draw landmarks
                     keypoints = extract_keypoints(results)
                     sequence.append(keypoints)
-                    sequence = sequence[-30:]  # 保持最近30帧
+                    sequence = sequence[-30:]  # keep a sequence queue with the last updated 30 frame
                     
-                    # 如果有手部关键点并且序列足够长，进行预测
                     if (results.left_hand_landmarks or results.right_hand_landmarks) and len(sequence) == 30:
                         try:
-                            # 转换为模型输入格式
                             input_data = torch.tensor(
                                 np.expand_dims(sequence, axis=0), 
                                 dtype=torch.float32
                             )
                             
-                            # 进行预测
+                            # model prediction
                             with torch.no_grad():
                                 res = model(input_data)
                             
-                            # 获取预测结果
                             probabilities = torch.softmax(res, dim=1)
                             max_prob, max_idx = torch.max(probabilities, dim=1)
                             
                             pred_class = gestures[max_idx.item()]
                             confidence = max_prob.item() * 100
                             
-                            # 存储预测结果
+                            # prediction results list strated by the first 30 frame
                             predictions_history.append({
                                 'class': pred_class,
                                 'confidence': confidence
@@ -172,23 +166,23 @@ if uploaded_file is not None:
                         except Exception as e:
                             pass
             
-            # 释放资源
+            # relase cap reader
             cap.release()
             progress_bar.progress(1.0)
             
-            # 第三个文本框：显示预测结果
-            st.markdown("### 预测结果")
+            # third message: show prediction results
+            st.markdown("### prediction results")
             
             first_prediction = predictions_history[0]       
-            st.success(f"**预测结果:** {first_prediction['class']}")
-            st.info(f"**置信度:** {first_prediction['confidence']:.1f}%")
+            st.success(f"**prediction results:** {first_prediction['class']}")
+            st.info(f"**confidence:** {first_prediction['confidence']:.1f}%")
             
-            # 清理临时文件
+            # clean the temporary file
             try:
                 os.unlink(video_path)
             except:
                 pass
 
-# 添加简单的说明
+# readme
 st.markdown("---")
-st.markdown("*上传包含手语的MP4视频文件，系统将自动识别手势动作*")
+st.markdown("*Please upload your sign language vido, AI model will classify the gestures*")
