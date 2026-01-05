@@ -77,8 +77,9 @@ num_classes = len(gestures)
 try:
     model = torch.load(model_path, weights_only=False)
     model.eval()
-except Exception as e:
+    except Exception as e:
     st.error(f"加载模型时出错: {str(e)}")
+    print(torch.cuda.is_available)
     model = CustomLSTM(input_size, hidden_size, num_classes)
     model.eval()
 
