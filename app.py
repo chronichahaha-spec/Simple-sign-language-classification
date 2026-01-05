@@ -74,14 +74,9 @@ input_size = 258
 hidden_size = 64
 num_classes = len(gestures)
 
-try:
-    model = torch.load(model_path, weights_only=False)
-    model.eval()
-except Exception as e:
-    st.error(f"加载模型时出错: {str(e)}")
-    print(torch.cuda.is_available)
-    model = torch.load(model_path,weights_only=False, map_location=torch.device('cpu'))
-    model.eval()
+
+model = torch.load(model_path,weights_only=False, map_location=torch.device('cpu'))
+model.eval()
 
 # 主界面
 st.title("👋 手势识别应用")
