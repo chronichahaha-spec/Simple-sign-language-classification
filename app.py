@@ -179,28 +179,9 @@ if uploaded_file is not None:
             # 第三个文本框：显示预测结果
             st.markdown("### 预测结果")
             
-            if predictions_history:
-                # 获取最后30帧的预测结果
-                last_30_predictions = predictions_history[-30:] if len(predictions_history) >= 30 else predictions_history
-                
-                # 统计每个类别的出现次数
-                class_counts = {}
-                for pred in last_30_predictions:
-                    pred_class = pred['class']
-                    class_counts[pred_class] = class_counts.get(pred_class, 0) + 1
-                
-                # 找到出现最多的类别
-                if class_counts:
-                    most_common_class = max(class_counts.items(), key=lambda x: x[1])
-                    final_prediction = most_common_class[0]
-                    confidence_score = (most_common_class[1] / len(last_30_predictions)) * 100
-                    
-                    st.success(f"**预测结果:** {final_prediction}")
-                    st.info(f"**置信度:** {confidence_score:.1f}%")
-                else:
-                    st.warning("未能确定分类结果")
-            else:
-                st.warning("未检测到手部动作")
+            first_prediction = predictions_history[0]       
+            st.success(f"**预测结果:** {first_prediction['class']}")
+            st.info(f"**置信度:** {first_prediction['confidence']:.1f}%")
             
             # 清理临时文件
             try:
