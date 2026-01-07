@@ -83,7 +83,7 @@ st.title("👋 Sign Language Video Classification")
 st.markdown("### Please upload your sign language to get AI model predictiom")
 
 # button to upload videos
-uploaded_file = st.file_uploader("Select the video file", type=['mp4', 'avi', 'mov'])
+uploaded_file = st.file_uploader("Select the video file", type=['mp4'])
 
 if uploaded_file is not None:
     # save as temporary file to pass into LSTM model
@@ -103,7 +103,7 @@ if uploaded_file is not None:
     with col1:
         st.info(f"**File Name:** {uploaded_file.name}")
     with col2:
-        st.info(f"**Duration:** {duration:.2f}秒")
+        st.info(f"**Duration:** {duration:.2f}seconds")
     
     # Button to start model prediction
     if st.button("Start Prediction", type="primary"):
